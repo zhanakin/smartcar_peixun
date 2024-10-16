@@ -1,7 +1,8 @@
 /*********************************************************************************************************************
 *
 ********************************************************************************************************************/
-#include "includes.h"
+#include "zf_common_headfile.h"
+#pragma section all "cpu0_dsram"
 // 将本语句与#pragma section all restore语句之间的全局变量都放在CPU0的RAM中
 
 // *************************** 例程硬件连接说明 ***************************
@@ -30,13 +31,14 @@
 
 
 // **************************** 代码区域 ****************************
-#define PWM_CH1                 (ATOM1_CH5_P20_9)
-#define PWM_CH2                 (ATOM0_CH7_P20_8)
-#define PWM_CH3                 (ATOM0_CH3_P21_5)
-#define PWM_CH4                 (ATOM0_CH2_P21_4)
+
 
 uint32 time_use = 0;
 int params[3][8]={0};
+uint16 fps,fps_i;
+
+uint8 slave_flag=0;
+uint8 show_flag=1;
 void init()
 {
     clock_init();                   // 获取时钟频率<务必保留>
@@ -45,11 +47,13 @@ void init()
     tft180_init();
     key_init(10);
     pit_ms_init(CCU60_CH0, 10);
+    pit_ms_init(CCU60_CH1, 1000);
+//    pit_ms_init(CCU61_CH0, 30);
 
+    mt9v03x_init();
     read_params();
 
-    pwm_init(PWM_CH1,params[0][0],params[0][1]);
-    pwm_init(ATOM0_CH6_P02_6,params[0][0],params[0][1]);
+    reinit();
 }
 
 
@@ -72,21 +76,38 @@ int core0_main(void)
 	        key_clear_all_state();
 	        show_stars();
 	        tft180_clear();
-            tft180_show_string(0, 0, "press 1=showstar");
             tft180_show_string(0, 16, "press 2=slave");
 	    }
 
 	    else if(key_get_state(1)==KEY_SHORT_PRESS)
 	    {
 	        key_clear_all_state();
+	        slave_flag=1;
 	        slave();
+	        slave_flag=0;
             tft180_clear();
-            tft180_show_string(0, 0, "press 1=showstar");
+//            tft180_show_int(0,96,params[1][0]-params[1][1],5);
+//            tft180_show_int(0,126,params[1][2]-params[1][3],5);
             tft180_show_string(0, 16, "press 2=slave");
-//	        pwm_init(PWM_CH1,17000,50);
 	    }
+	    else if(key_get_state(2)==KEY_SHORT_PRESS)
+        {
+            key_clear_all_state();
+            slave_flag=!slave_flag;
+        }
 
+	    process_one_frame();
+        ++fps_i;
+        tft180_show_uint(100,80,fps,3);
+        tft180_show_string(100,64,"fps");
 
+	    if(slave_flag==1||show_flag==0)
+	            continue;
+	    tft_show_camera();
+//        tft180_show_string(0, 80, "speed1:");
+//        tft180_show_string(56, 96, "/10000");
+//        tft180_show_string(0, 112, "speed2:");
+//        tft180_show_string(56, 128, "/10000");
 
         // 此处编写需要循环执行的代码
 	}

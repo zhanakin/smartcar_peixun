@@ -1,47 +1,53 @@
-#include "zf_device_key.h"
-#include "zf_device_tft180.h"
-#include "zf_driver_flash.h"
-#include "zf_driver_pwm.h"
+#include "zf_common_headfile.h"
 
 #define PWM_CH1                 (ATOM1_CH5_P20_9)
 #define PWM_CH2                 (ATOM0_CH7_P20_8)
 #define PWM_CH3                 (ATOM0_CH3_P21_5)
 #define PWM_CH4                 (ATOM0_CH2_P21_4)
 #define num_in_onepage 6
+
 extern int params[3][8];
+
 static int8_t key_i,page=0,param_i=0,param_page=0,pos=4;
 
 char param_name[3][8][9]={
         {"pwm_freq",
         "pwm_duty",
-        "c",
-        "d",
-        "qwe",
-        "asd",
-        "q123",
-        "aaa"},
-        {"param1",
+        "exp_time",
+        "th_bias",
+        "sight_up",
+        "sight_dn",
+        "",
+        ""},
+        {"duty21.2",
+        "duty21.3",
+        "duty21.4",
+        "duty21.5",
         "param1",
         "param1",
-        "param1",
-        "param1",
-        "param1",
-        "param1",
-        "param1"},
+        "",
+        ""},
         {"param2",
         "param2",
         "param2",
         "param2",
         "param2",
         "param2",
-        "param2",
-        "param2"}
+        "",
+        ""}
 };
 //extern key_state_enum key_state[KEY_NUMBER];
 void reinit()
 {
-    pwm_init(PWM_CH1,params[0][0],params[0][1]);
-    pwm_init(ATOM0_CH6_P02_6,params[0][0],params[0][1]);
+    pwm_init(MOTOR1_PWM_CH1,params[0][0],params[1][0]);
+    pwm_init(MOTOR1_PWM_CH2,params[0][0],params[1][1]);
+    pwm_init(MOTOR2_PWM_CH1,params[0][0],params[1][2]);
+    pwm_init(MOTOR2_PWM_CH2,params[0][0],params[1][3]);
+
+    mt9v03x_set_exposure_time(params[0][2]);
+    g_thres_bias=params[0][3];
+    foresight_up=params[0][4];
+    foresight_down=params[0][5];
 }
 int numlen(int n)
 {

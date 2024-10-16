@@ -35,6 +35,7 @@
 
 #include "isr_config.h"
 #include "isr.h"
+#include "zf_common_headfile.h"
 
 // 对于TC系列默认是不支持中断嵌套的，希望支持中断嵌套需要在中断内使用 interrupt_global_enable(0); 来开启中断嵌套
 // 简单点说实际上进入中断后TC系列的硬件自动调用了 interrupt_global_disable(); 来拒绝响应任何的中断，因此需要我们自己手动调用 interrupt_global_enable(0); 来开启中断的响应。
@@ -49,24 +50,28 @@ IFX_INTERRUPT(cc60_pit_ch0_isr, 0, CCU6_0_CH0_ISR_PRIORITY)
 
 }
 
-
+extern uint8 slave_flag;
+extern uint16 fps;
+extern uint16 fps_i;
 IFX_INTERRUPT(cc60_pit_ch1_isr, 0, CCU6_0_CH1_ISR_PRIORITY)
 {
     interrupt_global_enable(0);                     // 开启中断嵌套
     pit_clear_flag(CCU60_CH1);
 
 
-
+    fps=fps_i;
+    fps_i=0;
 
 }
-
 IFX_INTERRUPT(cc61_pit_ch0_isr, 0, CCU6_1_CH0_ISR_PRIORITY)
 {
     interrupt_global_enable(0);                     // 开启中断嵌套
     pit_clear_flag(CCU61_CH0);
-
-
-
+//    if(process_flag==1)
+//    {
+//        tft_show_camera();
+//        process_flag=0;
+//    }
 
 }
 
@@ -158,10 +163,21 @@ IFX_INTERRUPT(exti_ch3_ch7_isr, 0, EXTI_CH3_CH7_INT_PRIO)
 
 
 // **************************** DMA中断函数 ****************************
+
 IFX_INTERRUPT(dma_ch5_isr, 0, DMA_INT_PRIO)
 {
     interrupt_global_enable(0);                     // 开启中断嵌套
     camera_dma_handler();                           // 摄像头采集完成统一回调函数
+
+//    uint16 thres_value=image_fast_otsu();
+//    get_binary(mt9v03x_image[0],dil_input_image[0]);
+//    dilate(dil_input_image,dil_output_image,kernel,3);
+//    if(slave_flag==1)
+//        return;
+//    tft180_show_gray_image(0,0,mt9v03x_image[0],MT9V03X_W,MT9V03X_H,128,80,0);
+//    tft180_show_gray_image(0,80,mt9v03x_image[0],MT9V03X_W,MT9V03X_H,128,80,thres_value);
+////    tft180_show_gray_image(0,80,dil_input_image[0],MT9V03X_W,MT9V03X_H,128,80,0);
+//    tft180_show_int(0,80,thres_value,3);
 }
 // **************************** DMA中断函数 ****************************
 
